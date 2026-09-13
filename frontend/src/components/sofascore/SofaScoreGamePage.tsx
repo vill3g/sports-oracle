@@ -142,26 +142,37 @@ export const SofaScoreGamePage: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
-      {/* Outer Shell: Toggle between iPhone Mockup Bezel and Full Screen */}
+      {/* Outer Shell: Exact iPhone 17 Pro Max Chassis */}
       <div
         className={`w-full bg-[#0d121c] text-white flex flex-col transition-all duration-300 shadow-2xl relative ${
           isPhoneFrame
-            ? 'max-w-[420px] h-[100vh] sm:h-[92vh] sm:rounded-[48px] border-[8px] sm:border-[10px] border-[#222838] overflow-hidden'
+            ? 'max-w-[440px] h-[100vh] sm:h-[92vh] sm:rounded-[56px] border-0 sm:border-[5px] border-[#363d4f] shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden sm:ring-1 sm:ring-white/10'
             : 'max-w-4xl h-[95vh] rounded-2xl border border-[#222d42] overflow-hidden'
         }`}
       >
-        {/* iPhone 16 Pro Dynamic Island & Status Bar (in Phone Frame mode) */}
+        {/* iPhone 17 Pro Max Dynamic Island & iOS Status Bar */}
         {isPhoneFrame && (
-          <div className="w-full bg-[#0b0f17] pt-2 pb-1 px-7 flex items-center justify-between text-[11px] text-slate-300 select-none shrink-0 z-20 border-b border-[#182030]">
-            <span className="font-bold tracking-tight">9:41</span>
-            {/* Dynamic Island pill */}
-            <div className="w-24 h-4 bg-black rounded-full flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-slate-900 ml-auto mr-2" />
+          <div className="w-full bg-[#0b0f17] pt-2.5 pb-1 px-7 flex items-center justify-between text-[11px] text-slate-200 select-none shrink-0 z-20 border-b border-[#182030]">
+            <span className="font-extrabold tracking-tight">9:41</span>
+
+            {/* Dynamic Island with Live Activity */}
+            <div className="w-32 h-6 bg-black rounded-full flex items-center justify-between px-2.5 shadow-md border border-white/5">
+              <span className="text-[9px] text-[#00e700] font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00e700] animate-pulse" />
+                <span>{match.status === 'live' ? match.period || 'LIVE' : 'SOFASCORE'}</span>
+              </span>
+              <span className="text-[9px] text-slate-200 font-mono font-black">
+                {match.homeTeam.code} {match.liveScore ? `${match.liveScore.home}-${match.liveScore.away}` : 'v'} {match.awayTeam.code}
+              </span>
             </div>
+
             <div className="flex items-center gap-1.5 font-bold">
-              <span>5G</span>
-              <div className="w-5 h-2.5 border border-slate-400 rounded-sm p-0.5 flex items-center">
-                <div className="w-full h-full bg-[#00e700] rounded-2xs" />
+              <span className="text-[10px] font-mono">5G</span>
+              <div className="w-6 h-3 border border-slate-300 rounded-sm p-0.5 flex items-center relative">
+                <div className="w-full h-full bg-[#00e700] rounded-2xs flex items-center justify-center">
+                  <span className="text-[7px] text-black font-black leading-none">100</span>
+                </div>
+                <div className="w-0.5 h-1.5 bg-slate-300 rounded-r-2xs absolute -right-1" />
               </div>
             </div>
           </div>
