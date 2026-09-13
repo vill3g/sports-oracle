@@ -7,6 +7,7 @@ import { SmartSlip } from './components/smartslip/SmartSlip';
 import { BottomNav } from './components/layout/BottomNav';
 import { InsightModal } from './components/predictions/InsightModal';
 import { AccuracyModal } from './components/accuracy/AccuracyModal';
+import { SofaScoreGamePage } from './components/sofascore/SofaScoreGamePage';
 import { useSlip } from './context/SlipContext';
 import { INITIAL_PREDICTIONS } from './data/mockMatches';
 import { MatchPrediction } from './types/prediction';
@@ -123,9 +124,10 @@ export const AppContent: React.FC = () => {
       {/* Mobile Sticky Bottom Navigation */}
       <BottomNav />
 
-      {/* Modals */}
+      {/* Modals & Full Screen Game Page */}
       <InsightModal />
       <AccuracyModal />
+      <SofaScoreGamePage />
     </div>
   );
 };
