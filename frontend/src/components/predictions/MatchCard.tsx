@@ -9,7 +9,7 @@ interface MatchCardProps {
 }
 
 export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
-  const { togglePick, isPickSelected, setActiveInsightMatch } = useSlip();
+  const { togglePick, isPickSelected, setActiveInsightMatch, setActiveGamePageMatch } = useSlip();
 
   const homeWinPickId = `${match.id}_ML_home`;
   const awayWinPickId = `${match.id}_ML_away`;
@@ -309,20 +309,33 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
         {/* Feature Driver Snippet & Deep Dive Link */}
         <div className="mt-3 pt-2.5 border-t border-[#1d2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-slate-300">
+          <div
+            onClick={() => setActiveGamePageMatch(match)}
+            className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer hover:text-white transition"
+          >
             <span className="text-amber-400 font-bold">🧠 Model Driver:</span>
             <span className="truncate max-w-[280px] sm:max-w-md text-slate-300">
               {match.keyDrivers[0]}
             </span>
           </div>
 
-          <button
-            onClick={() => setActiveInsightMatch(match)}
-            className="flex items-center gap-1 text-xs font-bold text-[#00e700] hover:text-[#00c700] hover:underline self-end sm:self-auto cursor-pointer"
-          >
-            <span>Model Factor Breakdown ({match.features ? match.features.length : 3}+)</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={() => setActiveGamePageMatch(match)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 hover:text-blue-200 text-xs font-bold transition cursor-pointer"
+            >
+              <span>📱 SofaScore Game Page</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setActiveInsightMatch(match)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition cursor-pointer"
+              title="Quick Model Weights"
+            >
+              <span>Insights</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
