@@ -150,30 +150,12 @@ export const SofaScoreGamePage: React.FC = () => {
             : 'max-w-4xl h-[95vh] rounded-2xl border border-[#222d42] overflow-hidden'
         }`}
       >
-        {/* iPhone 17 Pro Max Dynamic Island & iOS Status Bar */}
+        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow */}
         {isPhoneFrame && (
-          <div className="w-full bg-[#0b0f17] pt-2.5 pb-1 px-7 flex items-center justify-between text-[11px] text-slate-200 select-none shrink-0 z-20 border-b border-[#182030]">
-            <span className="font-extrabold tracking-tight">9:41</span>
-
-            {/* Dynamic Island with Live Activity */}
-            <div className="w-32 h-6 bg-black rounded-full flex items-center justify-between px-2.5 shadow-md border border-white/5">
-              <span className="text-[9px] text-[#00e700] font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00e700] animate-pulse" />
-                <span>{match.status === 'live' ? match.period || 'LIVE' : 'SOFASCORE'}</span>
-              </span>
-              <span className="text-[9px] text-slate-200 font-mono font-black">
-                {match.homeTeam.code} {match.liveScore ? `${match.liveScore.home}-${match.liveScore.away}` : 'v'} {match.awayTeam.code}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 font-bold">
-              <span className="text-[10px] font-mono">5G</span>
-              <div className="w-6 h-3 border border-slate-300 rounded-sm p-0.5 flex items-center relative">
-                <div className="w-full h-full bg-[#00e700] rounded-2xs flex items-center justify-center">
-                  <span className="text-[7px] text-black font-black leading-none">100</span>
-                </div>
-                <div className="w-0.5 h-1.5 bg-slate-300 rounded-r-2xs absolute -right-1" />
-              </div>
+          <div className="w-full bg-[#0b0f17] pt-2.5 pb-2 px-7 flex items-center justify-center select-none shrink-0 z-20 border-b border-[#182030]">
+            <div className="relative">
+              {/* Dynamic Island pill with vibrant pulsing green glow */}
+              <div className="w-28 h-6 bg-black rounded-full border border-[#00e700]/70 shadow-[0_0_22px_rgba(0,231,0,0.75)] animate-pulse" />
             </div>
           </div>
         )}
