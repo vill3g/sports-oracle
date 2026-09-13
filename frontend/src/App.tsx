@@ -49,7 +49,7 @@ export const AppContent: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0d14] text-slate-100 flex flex-col pb-20 lg:pb-8">
+    <div className="min-h-screen bg-[#0a0d14] text-slate-100 flex flex-col pb-28 lg:pb-8">
       {/* Top Header */}
       <Header />
 
