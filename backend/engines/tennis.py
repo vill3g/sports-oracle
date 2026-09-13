@@ -1,11 +1,15 @@
-﻿import math
+import math
 from typing import List, Optional
-from .base import BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread, ProjectedTotal, FeatureImpact
+from .base import (
+    BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread,
+    ProjectedTotal, FeatureImpact, AdvancedMetrics, MarketIntelligence
+)
+from data.advanced_metrics_provider import metrics_provider
 
 class TennisEngine(BaseLeagueEngine):
     """
     Quantitative Tennis Model:
-    Uses surface-adjusted Elo ratings, Service Point Win % (SPW), Return Point Win % (RPW),
+    Uses surface-adjusted Elo ratings, Court Pace Index (CPI), Service Point Win % (SPW),
     and exact Markov-chain game hold probabilities to project match outcomes, game spreads, and totals.
     """
     def get_meta(self) -> LeagueMeta:
@@ -25,8 +29,6 @@ class TennisEngine(BaseLeagueEngine):
         """Exact probability of holding serve given probability of winning a point on serve (p)."""
         p = min(0.95, max(0.05, p_spw))
         q = 1.0 - p
-        # P(hold without deuce) + P(reach deuce) * P(win from deuce)
-        # Standard Barnett & Clarke Markov representation
         p_deuce = 20.0 * (p**3) * (q**3)
         p_win_deuce = (p**2) / (p**2 + q**2) if (p**2 + q**2) > 0 else 0.5
         p_hold_straight = p**4 * (1.0 + 4.0*q + 10.0*(q**2))
@@ -45,11 +47,16 @@ class TennisEngine(BaseLeagueEngine):
         player2_spw: float,
         surface: str,
         tournament: str,
-        start_time: str = "Today 2:00 PM",
+        start_time: str = "Today 4:00 PM",
         elo_diff: float = 85.0
     ) -> MatchPrediction:
-        hold1 = self._calc_game_hold_prob(player1_spw)
-        hold2 = self._calc_game_hold_prob(player2_spw)
+        adv_stats = metrics_provider.get_tennis_advanced(surface, elo_diff)
+        
+        # Adjust SPW by Court Pace Index (CPI > 40 boosts server advantage)
+        cpi = adv_stats["court_pace_index"]
+        cpi_boost = (cpi - 35.0) * 0.002
+        hold1 = self._calc_game_hold_prob(player1_spw + cpi_boost)
+        hold2 = self._calc_game_hold_prob(player2_spw + cpi_boost)
 
         # Elo logistic win expectation blended with hold disparity
         elo_prob = 1.0 / (1.0 + 10.0 ** (-elo_diff / 400.0))
@@ -70,6 +77,22 @@ class TennisEngine(BaseLeagueEngine):
 
         favored = "home" if match_win_prob1 >= match_win_prob2 else "away"
         edge_score = round(abs(match_win_prob1 - 0.5) * 10.0 + total_edge * 1.5, 1)
+
+        market_intel = metrics_provider.get_market_intelligence(match_id, favored)
+
+        adv_obj = AdvancedMetrics(
+            market=MarketIntelligence(
+                ticketPctHome=market_intel["ticket_pct_home"],
+                handlePctHome=market_intel["handle_pct_home"],
+                ticketPctAway=market_intel["ticket_pct_away"],
+                handlePctAway=market_intel["handle_pct_away"],
+                reverseLineMovement=market_intel["reverse_line_movement"],
+                rlmNote=market_intel["rlm_note"],
+                sharpSignal=market_intel["sharp_signal"],
+                sharpSide=market_intel["sharp_side"]
+            ),
+            sportStats=adv_stats
+        )
 
         return MatchPrediction(
             id=match_id,
@@ -111,15 +134,17 @@ class TennisEngine(BaseLeagueEngine):
             isTopPick=(edge_score >= 7.0),
             modelVersion="Tennis-Markov-2.4",
             keyDrivers=[
-                f"{player1_name} service hold probability on {surface}: {round(hold1*100, 1)}%",
-                f"{player2_name} service hold probability: {round(hold2*100, 1)}%",
-                f"Surface Elo disparity: +{int(elo_diff)} points favors {player1_name if elo_diff > 0 else player2_name}"
+                f"Court Pace Index (CPI {cpi}): {adv_stats['court_speed_desc']} ({adv_stats['surface_relevance']})",
+                f"{player1_name} service hold prob: {round(hold1*100, 1)}% vs {player2_name} {round(hold2*100, 1)}%",
+                f"Break Point Conversion: {adv_stats['bp_conversion_rate']}",
+                f"Sharp Money: {market_intel['sharp_signal']} ({market_intel['handle_pct_home']}% handle)"
             ],
             features=[
-                FeatureImpact(name=f"{surface} Surface Elo Rating", impact=f"+{int(abs(elo_diff))} Elo Points", description=f"Historical performance on {surface} tracks higher break efficiency", favors="home" if elo_diff > 0 else "away"),
-                FeatureImpact(name="Service Game Hold Expectation", impact=f"{round(hold1*100, 0)}% vs {round(hold2*100, 0)}%", description="Derived from 1st serve in% and unreturned serve rate", favors="home" if hold1 >= hold2 else "away"),
-                FeatureImpact(name="Tiebreak Volatility", impact="High (Projected 38% Set 1 TB)", description="Fast court conditions reduce return point conversion", favors="neutral")
-            ]
+                FeatureImpact(name="Court Pace Index (CPI)", impact=f"CPI {cpi} ({adv_stats['court_speed_desc']})", description="Laboratory surface speed rating altering rally length and hold rate", favors="home" if hold1 >= hold2 else "away"),
+                FeatureImpact(name=f"{surface} Surface Elo Disparity", impact=f"+{int(abs(elo_diff))} Elo Points", description=f"Historical performance on {surface} tracks higher break efficiency", favors="home" if elo_diff > 0 else "away"),
+                FeatureImpact(name="Tournament Fatigue Index", impact=adv_stats["court_time_l3d"], description=adv_stats["fatigue_penalty"], favors="neutral")
+            ],
+            advancedMetrics=adv_obj
         )
 
     def get_predictions(self) -> List[MatchPrediction]:
