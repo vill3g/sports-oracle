@@ -5,7 +5,7 @@ from .base import (
     BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread,
     ProjectedTotal, FeatureImpact, AdvancedMetrics, WeatherInfo, MarketIntelligence
 )
-from data.live_schedule_client import live_client
+from data.espn_client import espn_client
 from data.weather_service import weather_service
 from data.advanced_metrics_provider import metrics_provider
 
@@ -51,7 +51,8 @@ class NFLEngine(BaseLeagueEngine):
         away_rest: int = 7,
         status: str = "upcoming",
         period: Optional[str] = None,
-        live_score: Optional[dict] = None
+        live_score: Optional[dict] = None,
+        event_id: Optional[str] = None
     ) -> MatchPrediction:
         # 1. Fetch live weather & advanced trench/situational metrics
         weather_data = weather_service.get_stadium_weather(home_code, "nfl")
@@ -169,13 +170,13 @@ class NFLEngine(BaseLeagueEngine):
                 FeatureImpact(name="Neutral Game Script Pace", impact=adv_stats["neutral_pace_sec"], description=f"Expected pace of play: {adv_stats['pace_verdict']}", favors="neutral"),
                 FeatureImpact(name="Atmospheric Weather Impact", impact=f"{weather_pt_mod:+.1f} pts", description=weather_data["summary"], favors="neutral")
             ],
-            advancedMetrics=adv_obj
+            advancedMetrics=adv_obj,
+            eventId=event_id
         )
 
-    def get_predictions(self) -> List[MatchPrediction]:
-        real_slate = live_client.get_real_slate("nfl")
+    def get_predictions(self, date_str: Optional[str] = None) -> List[MatchPrediction]:
+        real_slate = espn_client.get_schedule("nfl", date_str)
         if not real_slate:
-            # Fallback benchmark
             return [
                 self._simulate_game(
                     match_id="nfl_kc_bal", home_team="Kansas City Chiefs", home_code="KC", home_record="13-3",
@@ -187,11 +188,9 @@ class NFLEngine(BaseLeagueEngine):
             ]
 
         predictions = []
-        for g in real_slate[:6]:
-            # Derive EPA profiles based on team strengths
+        for g in real_slate:
             h_code = g["home_team"]["code"]
             a_code = g["away_team"]["code"]
-            # Consistent seed based on team codes
             seed_val = (hash(h_code) + hash(a_code)) % 100
             h_pass_epa = round(0.05 + (seed_val % 20) * 0.01, 2)
             a_pass_epa = round(0.02 + ((seed_val + 7) % 20) * 0.01, 2)
@@ -217,7 +216,8 @@ class NFLEngine(BaseLeagueEngine):
                 start_time=g["start_time"],
                 status=g["status"],
                 period=g["period"],
-                live_score=g["live_score"]
+                live_score=g["live_score"],
+                event_id=g.get("event_id")
             )
             predictions.append(pred)
 
