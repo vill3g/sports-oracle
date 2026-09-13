@@ -150,12 +150,14 @@ export const SofaScoreGamePage: React.FC = () => {
             : 'max-w-4xl h-[95vh] rounded-2xl border border-[#222d42] overflow-hidden'
         }`}
       >
-        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow */}
+        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow Wrapped Around It */}
         {isPhoneFrame && (
-          <div className="w-full bg-[#0b0f17] pt-2.5 pb-2 px-7 flex items-center justify-center select-none shrink-0 z-20 border-b border-[#182030]">
-            <div className="relative">
-              {/* Dynamic Island pill with vibrant pulsing green glow */}
-              <div className="w-28 h-6 bg-black rounded-full border border-[#00e700]/70 shadow-[0_0_22px_rgba(0,231,0,0.75)] animate-pulse" />
+          <div className="w-full bg-[#0b0f17] py-3 px-7 flex items-center justify-center select-none shrink-0 z-20">
+            <div className="relative flex items-center justify-center">
+              {/* Pulsing neon green halo wrapped snugly around the island perimeter */}
+              <div className="absolute -inset-[3px] rounded-full bg-[#00e700] opacity-80 blur-[5px] animate-pulse pointer-events-none" />
+              {/* Solid black dynamic island pill with glowing neon contour */}
+              <div className="relative w-28 h-7 bg-black rounded-full border-2 border-[#00e700] shadow-[0_0_10px_rgba(0,231,0,0.8),inset_0_0_4px_rgba(0,231,0,0.3)] flex items-center justify-center" />
             </div>
           </div>
         )}
