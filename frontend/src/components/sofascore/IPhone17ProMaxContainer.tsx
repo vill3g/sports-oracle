@@ -66,11 +66,13 @@ export const IPhone17ProMaxContainer: React.FC<IPhone17ProMaxContainerProps> = (
           </>
         )}
 
-        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow */}
-        <div className="sticky top-0 z-50 bg-[#0c1017]/95 backdrop-blur-md pt-2.5 pb-2 px-6 flex items-center justify-center select-none border-b border-[#182030]/60 shrink-0">
-          <div className="relative">
-            {/* Dynamic Island pill with vibrant pulsing green glow */}
-            <div className="w-28 h-6 bg-black rounded-full border border-[#00e700]/70 shadow-[0_0_22px_rgba(0,231,0,0.75)] animate-pulse" />
+        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow Wrapped Around It */}
+        <div className="sticky top-0 z-50 bg-[#0c1017] py-3 px-6 flex items-center justify-center select-none shrink-0">
+          <div className="relative flex items-center justify-center">
+            {/* Pulsing neon green halo wrapped snugly around the island perimeter */}
+            <div className="absolute -inset-[3px] rounded-full bg-[#00e700] opacity-80 blur-[5px] animate-pulse pointer-events-none" />
+            {/* Solid black dynamic island pill with glowing neon contour */}
+            <div className="relative w-28 h-7 bg-black rounded-full border-2 border-[#00e700] shadow-[0_0_10px_rgba(0,231,0,0.8),inset_0_0_4px_rgba(0,231,0,0.3)] flex items-center justify-center" />
           </div>
         </div>
 
