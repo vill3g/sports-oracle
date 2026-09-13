@@ -6,7 +6,7 @@ export const Header: React.FC = () => {
   const { setShowAccuracyModal, selectedPicks, setIsSlipOpen } = useSlip();
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0a0d14]/95 backdrop-blur-md border-b border-[#20293d]/80 px-4 py-2.5">
+    <header className="sticky top-[48px] z-40 bg-[#0a0d14]/95 backdrop-blur-md border-b border-[#20293d]/80 px-4 pt-1.5 pb-2">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Left: Clean Brand & Logo */}
         <div className="flex items-center gap-2.5">
