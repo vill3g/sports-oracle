@@ -8,9 +8,9 @@ class NBAEngine(BaseLeagueEngine):
             name="NBA",
             icon="🏀",
             sport="Basketball",
-            activeGames=2,
+            activeGames=1,
             modelName="Four-Factors & Pace Markov Simulator",
-            modelVersion="v3.8.4",
+            modelVersion="NBA-FourFactor-3.8",
             accuracyL30D=64.1,
             roiL30D=14.8
         )
@@ -65,51 +65,6 @@ class NBAEngine(BaseLeagueEngine):
                     FeatureImpact(name="Effective FG% (eFG%) Margin", impact="+4.2% eFG%", description="Celtics floor spacing generates highest corner-3 shot quality in NBA", favors="home"),
                     FeatureImpact(name="Offensive Rebound Rate", impact="+5.1% ORB", description="Jokic interior presence creates 2nd-chance point advantage for Denver", favors="away"),
                     FeatureImpact(name="Pace Acceleration", impact="+3.4 Possessions", description="Projected 102.5 possessions exceeds market baseline of 98.2", favors="neutral")
-                ]
-            ),
-            MatchPrediction(
-                id="nba_lal_gsw",
-                leagueId="nba",
-                leagueName="NBA",
-                startTime="Tonight 10:00 PM",
-                status="upcoming",
-                homeTeam=TeamInfo(
-                    name="LA Lakers",
-                    code="LAL",
-                    record="34-26",
-                    winProb=0.526,
-                    projectedScore=116.8
-                ),
-                awayTeam=TeamInfo(
-                    name="GS Warriors",
-                    code="GSW",
-                    record="33-27",
-                    winProb=0.474,
-                    projectedScore=115.4
-                ),
-                projectedSpread=ProjectedSpread(
-                    favoredTeam="home",
-                    margin=1.4,
-                    marketLine=2.5,
-                    edge=1.1,
-                    coverProb=0.548
-                ),
-                projectedTotal=ProjectedTotal(
-                    projected=232.2,
-                    marketLine=235.0,
-                    recommendation="UNDER",
-                    edgePoints=2.8,
-                    overProb=0.442
-                ),
-                confidenceRating="VALUE_LEAN",
-                confidenceScore=0.72,
-                edgeScore=6.0,
-                isTopPick=False,
-                modelVersion="NBA-FourFactor-3.8",
-                keyDrivers=[
-                    "Under Lean: Defensive rating in head-to-heads improves in 4th quarters",
-                    "Free throw rate differential: Lakers draw +6.2 more FT attempts",
-                    "Fatigue impact: Warriors on second night of back-to-back"
                 ]
             )
         ]
