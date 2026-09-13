@@ -12,7 +12,7 @@ export const BottomNav: React.FC = () => {
   } = useSlip();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0a0d14]/95 backdrop-blur-lg border-t border-[#20293d] px-3 py-2 flex items-center justify-around">
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0a0d14]/95 backdrop-blur-lg border-t border-[#20293d] px-3 pt-2.5 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl">
       {/* Home */}
       <button
         onClick={() => setActiveLeague('all')}
