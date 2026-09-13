@@ -3,7 +3,7 @@ from typing import List, Optional, Literal
 from abc import ABC, abstractmethod
 
 class TeamInfo(BaseModel):
-    name: string if False else str
+    name: str
     code: str
     record: str
     logo: Optional[str] = None
