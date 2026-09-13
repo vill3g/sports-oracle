@@ -11,7 +11,7 @@ from .base import (
     BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread,
     ProjectedTotal, FeatureImpact, AdvancedMetrics, WeatherInfo, MarketIntelligence
 )
-from data.live_schedule_client import live_client
+from data.espn_client import espn_client
 from data.weather_service import weather_service
 from data.advanced_metrics_provider import metrics_provider
 
@@ -56,7 +56,8 @@ class MLBEngine(BaseLeagueEngine):
         market_total: float = 8.5,
         status: str = "upcoming",
         period: Optional[str] = None,
-        live_score: Optional[dict] = None
+        live_score: Optional[dict] = None,
+        event_id: Optional[str] = None
     ) -> MatchPrediction:
         # 1. Fetch live environmental weather & advanced Statcast metrics
         weather_data = weather_service.get_stadium_weather(home_code, "mlb")
@@ -188,18 +189,19 @@ class MLBEngine(BaseLeagueEngine):
                 FeatureImpact(name="Bullpen High-Leverage Fatigue", impact=f"{adv_stats['home_bullpen_l3d_pitches']}p vs {adv_stats['away_bullpen_l3d_pitches']}p L3D", description="Pitches thrown in last 3 days by high-leverage relievers", favors="home" if adv_stats['home_bullpen_l3d_pitches'] < adv_stats['away_bullpen_l3d_pitches'] else "away"),
                 FeatureImpact(name="Umpire Strike Zone Tendency", impact=adv_stats["umpire_impact"], description="Home plate umpire historical run impact rating", favors="neutral")
             ],
-            advancedMetrics=adv_obj
+            advancedMetrics=adv_obj,
+            eventId=event_id
         )
 
-    def get_predictions(self) -> List[MatchPrediction]:
-        real_slate = live_client.get_real_slate("mlb")
+    def get_predictions(self, date_str: Optional[str] = None) -> List[MatchPrediction]:
+        real_slate = espn_client.get_schedule("mlb", date_str)
         if not real_slate:
             return [
                 self._simulate_mlb_game("mlb_nyy_bos", "NY Yankees", "NYY", "24-14", "Boston Red Sox", "BOS", "19-19", "Today 7:05 PM")
             ]
 
         predictions = []
-        for g in real_slate[:6]:
+        for g in real_slate:
             pred = self._simulate_mlb_game(
                 match_id=g["game_id"],
                 home_team=g["home_team"]["name"],
@@ -213,7 +215,8 @@ class MLBEngine(BaseLeagueEngine):
                 market_total=g["market_total"],
                 status=g["status"],
                 period=g["period"],
-                live_score=g["live_score"]
+                live_score=g["live_score"],
+                event_id=g.get("event_id")
             )
             predictions.append(pred)
 
