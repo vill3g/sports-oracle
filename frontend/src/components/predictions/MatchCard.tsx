@@ -2,6 +2,7 @@ import React from 'react';
 import { MatchPrediction, SelectedPrediction } from '../../types/prediction';
 import { useSlip } from '../../context/SlipContext';
 import { Zap, ChevronRight, Activity, Cpu } from 'lucide-react';
+import { formatGameTime } from '../../utils/timezone';
 
 interface MatchCardProps {
   match: MatchPrediction;
@@ -77,7 +78,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
               LIVE {match.period}
             </span>
           ) : (
-            <span className="text-slate-400 font-medium">{match.startTime}</span>
+            <span className="text-slate-400 font-medium">{formatGameTime(match.startTime)}</span>
           )}
           <span className="text-slate-500">•</span>
           <span className="text-slate-400 font-semibold">{match.leagueName}</span>
