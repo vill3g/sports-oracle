@@ -76,6 +76,8 @@ class MatchPrediction(BaseModel):
     keyDrivers: List[str]
     features: Optional[List[FeatureImpact]] = None
     advancedMetrics: Optional[AdvancedMetrics] = None
+    eventId: Optional[str] = None
+    espnDetails: Optional[dict] = None
 
 class LeagueMeta(BaseModel):
     id: str
