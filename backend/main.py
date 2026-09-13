@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import sys
 from fastapi import FastAPI, HTTPException, Query
@@ -48,23 +48,43 @@ def read_root():
 def get_leagues():
     return [engine.get_meta() for engine in ENGINES.values()]
 
+from data.espn_client import espn_client
+
 @app.get("/api/predictions", response_model=List[MatchPrediction])
 def get_predictions(
     league: Optional[str] = Query(None, description="Filter by league ID (epl, nfl, nba, mlb, laliga, tennis)"),
-    top_picks_only: bool = Query(False, description="Filter to only high-edge / top model picks")
+    top_picks_only: bool = Query(False, description="Filter to only high-edge / top model picks"),
+    date: Optional[str] = Query(None, description="ESPN date filter (e.g. 20260913)")
 ):
     results: List[MatchPrediction] = []
     
     if league and league.lower() in ENGINES:
-        results = ENGINES[league.lower()].get_predictions()
+        try:
+            results = ENGINES[league.lower()].get_predictions(date_str=date)
+        except TypeError:
+            results = ENGINES[league.lower()].get_predictions()
     else:
         for engine in ENGINES.values():
-            results.extend(engine.get_predictions())
+            try:
+                results.extend(engine.get_predictions(date_str=date))
+            except TypeError:
+                results.extend(engine.get_predictions())
             
     if top_picks_only:
         results = [p for p in results if p.isTopPick or p.confidenceRating == "HIGH"]
         
     return results
+
+@app.get("/api/espn/game/{league}/{event_id}")
+def get_espn_game(league: str, event_id: str):
+    details = espn_client.get_game_details(league, event_id)
+    if not details:
+        raise HTTPException(status_code=404, detail=f"ESPN game details not found for event {event_id}")
+    return details
+
+@app.get("/api/espn/schedule/{league}")
+def get_espn_schedule(league: str, date: Optional[str] = Query(None)):
+    return espn_client.get_schedule(league, date)
 
 @app.get("/api/insights/{match_id}")
 def get_match_insights(match_id: str):
