@@ -79,6 +79,80 @@ export interface MatchPrediction {
   keyDrivers: string[];
   features?: FeatureImpact[];
   advancedMetrics?: AdvancedMetrics;
+  eventId?: string;
+  espnDetails?: ESPNGameDetails;
+}
+
+export interface ESPNPlayer {
+  name: string;
+  shortName?: string;
+  jersey?: string;
+  position?: string;
+  headshot?: string;
+  stats?: string[];
+  starter?: boolean;
+}
+
+export interface ESPNStatCategory {
+  category: string;
+  labels: string[];
+  athletes: ESPNPlayer[];
+}
+
+export interface ESPNTeamBoxscore {
+  teamId: string;
+  teamName: string;
+  teamAbbr: string;
+  categories: ESPNStatCategory[];
+}
+
+export interface ESPNLeader {
+  category: string;
+  athleteName: string;
+  jersey?: string;
+  position?: string;
+  headshot?: string;
+  displayValue: string;
+}
+
+export interface ESPNTeamLeaderGroup {
+  teamId: string;
+  teamName: string;
+  leaders: ESPNLeader[];
+}
+
+export interface ESPNGameLog {
+  opponent: string;
+  opponentAbbr: string;
+  opponentLogo?: string;
+  result: string;
+  score: string;
+  date: string;
+}
+
+export interface ESPNTeamLastFive {
+  teamId: string;
+  teamName: string;
+  teamAbbr: string;
+  games: ESPNGameLog[];
+}
+
+export interface ESPNH2HMatch {
+  date: string;
+  team1: { name: string; score: string; winner?: boolean };
+  team2: { name: string; score: string; winner?: boolean };
+  status: string;
+}
+
+export interface ESPNGameDetails {
+  eventId: string;
+  leagueId: string;
+  boxscore: ESPNTeamBoxscore[];
+  rosters?: Array<{ teamId: string; teamName: string; players: any[] }>;
+  leaders: ESPNTeamLeaderGroup[];
+  lastFiveGames: ESPNTeamLastFive[];
+  h2hMatches: ESPNH2HMatch[];
+  venue?: { name: string; city: string; indoor: boolean };
 }
 
 export interface LeagueMeta {
