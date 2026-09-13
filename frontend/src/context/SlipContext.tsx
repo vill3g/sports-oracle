@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SelectedPrediction, MatchPrediction } from '../types/prediction';
+import { formatToEasternTime } from '../utils/timezone';
 
 interface SlipContextType {
   selectedPicks: SelectedPrediction[];
@@ -83,7 +84,7 @@ export const SlipProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const jointProb = selectedPicks.reduce((acc, p) => acc * p.probability, 1);
     const newEntry = {
       id: Date.now().toString(),
-      date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }),
+      date: formatToEasternTime(new Date(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
       picks: [...selectedPicks],
       jointProb: Math.round(jointProb * 1000) / 10
     };
