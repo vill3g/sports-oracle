@@ -30,6 +30,34 @@ export interface FeatureImpact {
   favors: 'home' | 'away' | 'neutral';
 }
 
+export interface WeatherInfo {
+  venueName: string;
+  isDome: boolean;
+  temperatureF: number;
+  windSpeedMph: number;
+  windDirection: string;
+  condition: string;
+  impactDesc: string;
+  totalModifier: number;
+}
+
+export interface MarketIntelligence {
+  ticketPctHome: number;
+  handlePctHome: number;
+  ticketPctAway: number;
+  handlePctAway: number;
+  reverseLineMovement: boolean;
+  rlmNote: string;
+  sharpSignal: string;
+  sharpSide: string;
+}
+
+export interface AdvancedMetrics {
+  weather?: WeatherInfo;
+  market?: MarketIntelligence;
+  sportStats?: Record<string, any>;
+}
+
 export interface MatchPrediction {
   id: string;
   leagueId: string;
@@ -50,6 +78,7 @@ export interface MatchPrediction {
   modelVersion: string;
   keyDrivers: string[];
   features?: FeatureImpact[];
+  advancedMetrics?: AdvancedMetrics;
 }
 
 export interface LeagueMeta {
