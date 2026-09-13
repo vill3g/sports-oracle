@@ -30,6 +30,31 @@ class FeatureImpact(BaseModel):
     description: str
     favors: Literal["home", "away", "neutral"]
 
+class WeatherInfo(BaseModel):
+    venueName: str
+    isDome: bool
+    temperatureF: float
+    windSpeedMph: float
+    windDirection: str
+    condition: str
+    impactDesc: str
+    totalModifier: float
+
+class MarketIntelligence(BaseModel):
+    ticketPctHome: float
+    handlePctHome: float
+    ticketPctAway: float
+    handlePctAway: float
+    reverseLineMovement: bool
+    rlmNote: str
+    sharpSignal: str
+    sharpSide: str
+
+class AdvancedMetrics(BaseModel):
+    weather: Optional[WeatherInfo] = None
+    market: Optional[MarketIntelligence] = None
+    sportStats: Optional[dict] = None
+
 class MatchPrediction(BaseModel):
     id: str
     leagueId: str  # "epl", "nfl", "nba", "mlb", "laliga"
@@ -50,6 +75,7 @@ class MatchPrediction(BaseModel):
     modelVersion: str
     keyDrivers: List[str]
     features: Optional[List[FeatureImpact]] = None
+    advancedMetrics: Optional[AdvancedMetrics] = None
 
 class LeagueMeta(BaseModel):
     id: str
