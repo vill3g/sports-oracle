@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSlip } from '../../context/SlipContext';
-import { SelectedPrediction, PickType } from '../../types/prediction';
+import { SelectedPrediction, PickType, ESPNGameDetails } from '../../types/prediction';
 import {
   ChevronLeft,
   Star,
@@ -19,7 +19,9 @@ import {
   Users,
   Compass,
   Calendar,
-  Sparkles
+  Sparkles,
+  Award,
+  Loader2
 } from 'lucide-react';
 import { formatGameTime } from '../../utils/timezone';
 
@@ -31,6 +33,20 @@ export const SofaScoreGamePage: React.FC = () => {
   const [isPhoneFrame, setIsPhoneFrame] = useState<boolean>(true);
   const [isStarred, setIsStarred] = useState<boolean>(false);
   const [userVoted, setUserVoted] = useState<'home' | 'draw' | 'away' | null>(null);
+  const [espnDetails, setEspnDetails] = useState<ESPNGameDetails | null>(null);
+  const [isLoadingEspn, setIsLoadingEspn] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!activeGamePageMatch?.eventId) return;
+    setIsLoadingEspn(true);
+    fetch(`http://127.0.0.1:8000/api/espn/game/${activeGamePageMatch.leagueId}/${activeGamePageMatch.eventId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setEspnDetails(data);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingEspn(false));
+  }, [activeGamePageMatch?.id, activeGamePageMatch?.eventId, activeGamePageMatch?.leagueId]);
 
   if (!activeGamePageMatch) return null;
 
@@ -502,6 +518,62 @@ export const SofaScoreGamePage: React.FC = () => {
                     <SofaScoreBar label="Win Probability" homeVal={`${Math.round(match.homeTeam.winProb * 100)}%`} awayVal={`${Math.round(match.awayTeam.winProb * 100)}%`} />
                   </>
                 )}
+
+                {/* Official ESPN Game Leaders */}
+                {espnDetails?.leaders && espnDetails.leaders.length > 0 && (
+                  <div className="bg-[#111726] border border-[#1d273a] rounded-xl p-3.5 space-y-3 mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-white uppercase tracking-wider">
+                        <Award className="w-3.5 h-3.5 text-[#00e700]" />
+                        <span>Official ESPN Game Leaders</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono font-bold bg-[#172033] px-2 py-0.5 rounded">
+                        ESPN Live
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 divide-y divide-[#1c2638]">
+                      {espnDetails.leaders.map((teamGroup) => (
+                        <div key={teamGroup.teamId} className="pt-2 first:pt-0 space-y-2">
+                          <div className="text-[11px] font-extrabold text-slate-300">
+                            {teamGroup.teamName} Leaders
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {teamGroup.leaders.map((l, idx) => (
+                              <div
+                                key={idx}
+                                className="bg-[#0b1018] border border-[#1c2638] rounded-lg p-2 flex items-center gap-2.5"
+                              >
+                                {l.headshot ? (
+                                  <img
+                                    src={l.headshot}
+                                    alt={l.athleteName}
+                                    className="w-9 h-9 rounded-full object-cover bg-slate-800 border border-slate-700"
+                                  />
+                                ) : (
+                                  <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-300 border border-slate-700">
+                                    {l.position || 'PRO'}
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[10px] font-bold text-[#00e700] uppercase tracking-wider">
+                                    {l.category}
+                                  </div>
+                                  <div className="text-xs font-black text-white truncate">
+                                    {l.athleteName}
+                                  </div>
+                                  <div className="text-[11px] font-mono text-slate-300 font-bold">
+                                    {l.displayValue}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -561,112 +633,230 @@ export const SofaScoreGamePage: React.FC = () => {
             {/* 4. TAB: LINEUPS */}
             {activeTab === 'lineups' && (
               <div className="space-y-4">
-                {/* Visual Field / Court Diagram */}
-                <div className="bg-gradient-to-b from-emerald-950/40 via-[#0d1624] to-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 relative overflow-hidden text-center">
-                  <div className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-widest mb-3">
-                    Tactical Formation & Player Ratings
-                  </div>
-
-                  <div className="relative py-6 border border-emerald-500/20 rounded-xl bg-emerald-900/10">
-                    {/* Halfway line */}
-                    <div className="absolute top-1/2 left-0 right-0 h-px bg-emerald-500/30" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-emerald-500/30" />
-
-                    {/* Top Team Players (Away) */}
-                    <div className="flex justify-around mb-8">
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow">
-                          {match.awayTeam.code.slice(0, 2)}
-                        </div>
-                        <span className="text-[9px] text-slate-300 font-bold mt-1">Attacker</span>
-                        <span className="text-[9px] font-extrabold px-1 rounded bg-emerald-500 text-black">7.8</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow">
-                          {match.awayTeam.code.slice(0, 2)}
-                        </div>
-                        <span className="text-[9px] text-slate-300 font-bold mt-1">Playmaker</span>
-                        <span className="text-[9px] font-extrabold px-1 rounded bg-emerald-500 text-black">8.1</span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Team Players (Home) */}
-                    <div className="flex justify-around mt-8">
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-[#00e700] text-black font-black text-xs flex items-center justify-center shadow">
-                          {match.homeTeam.code.slice(0, 2)}
-                        </div>
-                        <span className="text-[9px] text-slate-300 font-bold mt-1">Striker / QB</span>
-                        <span className="text-[9px] font-extrabold px-1 rounded bg-emerald-400 text-black">8.4</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-[#00e700] text-black font-black text-xs flex items-center justify-center shadow">
-                          {match.homeTeam.code.slice(0, 2)}
-                        </div>
-                        <span className="text-[9px] text-slate-300 font-bold mt-1">Anchor</span>
-                        <span className="text-[9px] font-extrabold px-1 rounded bg-emerald-400 text-black">7.6</span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="bg-[#111726] border border-[#1d273a] rounded-xl p-3 flex items-center justify-between">
+                  <span className="text-xs font-black text-white uppercase tracking-wider">
+                    Official ESPN Player Boxscore & Lineups
+                  </span>
+                  <span className="text-[10px] font-mono font-extrabold text-[#00e700] bg-[#00e700]/15 px-2 py-0.5 rounded-full border border-[#00e700]/30">
+                    ESPN Verified
+                  </span>
                 </div>
+
+                {isLoadingEspn && (
+                  <div className="bg-[#111726] border border-[#1d273a] rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#00e700]" />
+                    <span className="text-xs">Fetching official ESPN player stats...</span>
+                  </div>
+                )}
+
+                {/* Boxscore player stats from ESPN */}
+                {espnDetails?.boxscore && espnDetails.boxscore.length > 0 ? (
+                  <div className="space-y-4">
+                    {espnDetails.boxscore.map((teamBox) => (
+                      <div key={teamBox.teamId} className="bg-[#111726] border border-[#1d273a] rounded-xl overflow-hidden shadow">
+                        <div className="bg-[#161f2e] px-3.5 py-2 border-b border-[#222d42] flex items-center justify-between">
+                          <span className="font-black text-white text-xs tracking-wide">
+                            {teamBox.teamName}
+                          </span>
+                          <span className="text-[10px] font-mono font-bold text-slate-400">
+                            {teamBox.teamAbbr}
+                          </span>
+                        </div>
+
+                        <div className="p-3 space-y-4 divide-y divide-[#1b2333]">
+                          {teamBox.categories.map((cat, cIdx) => (
+                            <div key={cIdx} className="pt-3 first:pt-0 space-y-2">
+                              <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+                                <span className="text-[#00e700] font-black uppercase tracking-wider">{cat.category}</span>
+                                {cat.labels && cat.labels.length > 0 && (
+                                  <div className="flex gap-2 text-[10px] font-mono text-slate-400 font-bold overflow-x-auto">
+                                    {cat.labels.slice(0, 6).map((lbl, lIdx) => (
+                                      <span key={lIdx} className="w-7 text-right">{lbl}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="divide-y divide-[#151c2a]">
+                                {cat.athletes.map((ath, aIdx) => (
+                                  <div key={aIdx} className="py-1.5 flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      {ath.headshot ? (
+                                        <img
+                                          src={ath.headshot}
+                                          alt={ath.name}
+                                          className="w-6 h-6 rounded-full object-cover bg-slate-800 shrink-0"
+                                        />
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-300 shrink-0">
+                                          {ath.position || '#'}
+                                        </div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <div className="font-bold text-white text-xs truncate flex items-center gap-1">
+                                          <span>{ath.name}</span>
+                                          {ath.starter && (
+                                            <span className="text-[8px] font-extrabold bg-[#00e700]/20 text-[#00e700] px-1 rounded">
+                                              START
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400">
+                                          {ath.position ? `${ath.position} ` : ''}{ath.jersey ? `#${ath.jersey}` : ''}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {ath.stats && (
+                                      <div className="flex gap-2 font-mono text-xs text-slate-300 font-semibold shrink-0">
+                                        {ath.stats.slice(0, 6).map((st, sIdx) => (
+                                          <span key={sIdx} className="w-7 text-right truncate">{st}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : espnDetails?.rosters && espnDetails.rosters.length > 0 ? (
+                  <div className="space-y-4">
+                    {espnDetails.rosters.map((rTeam) => (
+                      <div key={rTeam.teamId} className="bg-[#111726] border border-[#1d273a] rounded-xl overflow-hidden shadow">
+                        <div className="bg-[#161f2e] px-3.5 py-2 border-b border-[#222d42] flex items-center justify-between">
+                          <span className="font-black text-white text-xs tracking-wide">
+                            {rTeam.teamName} Starting XI & Squad
+                          </span>
+                        </div>
+                        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {rTeam.players.map((p, pIdx) => (
+                            <div key={pIdx} className="bg-[#0b1018] p-2 rounded-lg flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 font-mono font-bold text-slate-400 text-[10px]">#{p.jersey || pIdx + 1}</span>
+                                <span className="font-bold text-white">{p.name}</span>
+                              </div>
+                              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                                {p.position || 'Player'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : !isLoadingEspn && (
+                  <div className="bg-[#111726] border border-[#1d273a] rounded-xl p-6 text-center text-slate-400 text-xs">
+                    Official ESPN player statistics and boxscore will populate upon game start.
+                  </div>
+                )}
               </div>
             )}
 
             {/* 5. TAB: H2H & FORM */}
             {activeTab === 'h2h' && (
               <div className="space-y-4">
-                {/* Form Guide */}
+                {/* Real ESPN Last 5 Games Form */}
                 <div className="bg-[#111726] border border-[#1d273a] rounded-xl p-3.5 space-y-3">
-                  <div className="text-xs font-bold text-slate-400 uppercase">Recent Match Form</div>
-
-                  {/* Home Team Form */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-white">{match.homeTeam.name}</span>
-                    <div className="flex gap-1">
-                      {['W', 'W', 'D', 'W', 'L'].map((f, i) => (
-                        <span
-                          key={i}
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
-                            f === 'W' ? 'bg-emerald-500 text-black' : f === 'D' ? 'bg-slate-600 text-white' : 'bg-rose-500 text-white'
-                          }`}
-                        >
-                          {f}
-                        </span>
-                      ))}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-black text-white uppercase tracking-wider">
+                      Recent Match Logs (ESPN Official)
                     </div>
+                    <span className="text-[10px] font-mono text-[#00e700] bg-[#00e700]/15 px-2 py-0.5 rounded-full border border-[#00e700]/30 font-bold">
+                      Last 5 Games
+                    </span>
                   </div>
 
-                  {/* Away Team Form */}
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-[#1a2336]">
-                    <span className="font-bold text-white">{match.awayTeam.name}</span>
-                    <div className="flex gap-1">
-                      {['W', 'L', 'W', 'D', 'W'].map((f, i) => (
-                        <span
-                          key={i}
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
-                            f === 'W' ? 'bg-emerald-500 text-black' : f === 'D' ? 'bg-slate-600 text-white' : 'bg-rose-500 text-white'
-                          }`}
-                        >
-                          {f}
-                        </span>
+                  {espnDetails?.lastFiveGames && espnDetails.lastFiveGames.length > 0 ? (
+                    <div className="space-y-3 divide-y divide-[#1c2638]">
+                      {espnDetails.lastFiveGames.map((lfTeam) => (
+                        <div key={lfTeam.teamId} className="pt-2 first:pt-0 space-y-2">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-200">
+                            <span>{lfTeam.teamName}</span>
+                            <div className="flex gap-1">
+                              {lfTeam.games.map((g, i) => (
+                                <span
+                                  key={i}
+                                  title={`${g.result} ${g.score} vs ${g.opponent}`}
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                    g.result === 'W'
+                                      ? 'bg-emerald-500 text-black'
+                                      : g.result === 'D'
+                                      ? 'bg-slate-600 text-white'
+                                      : 'bg-rose-500 text-white'
+                                  }`}
+                                >
+                                  {g.result}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            {lfTeam.games.map((g, gIdx) => (
+                              <div
+                                key={gIdx}
+                                className="bg-[#0b1018] px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs border border-[#182030]"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`w-4 h-4 rounded text-[9px] font-black flex items-center justify-center ${
+                                      g.result === 'W'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                        : g.result === 'D'
+                                        ? 'bg-slate-600/20 text-slate-300'
+                                        : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                    }`}
+                                  >
+                                    {g.result}
+                                  </span>
+                                  <span className="text-slate-300 font-medium">
+                                    vs {g.opponent}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-white">{g.score}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center text-xs text-slate-400 py-3">
+                      Loading ESPN official game logs...
+                    </div>
+                  )}
                 </div>
 
-                {/* H2H Meetings */}
+                {/* Head-to-Head History from ESPN seasonseries */}
                 <div className="bg-[#111726] border border-[#1d273a] rounded-xl p-3.5 space-y-2">
-                  <div className="text-xs font-bold text-slate-400 uppercase">Head-to-Head History</div>
-                  <div className="space-y-1.5 text-xs">
-                    <div className="bg-[#0b1018] p-2 rounded-lg flex justify-between items-center text-slate-300">
-                      <span>Last Meeting</span>
-                      <span className="font-mono font-bold text-white">{match.homeTeam.code} 3 - 1 {match.awayTeam.code}</span>
-                    </div>
-                    <div className="bg-[#0b1018] p-2 rounded-lg flex justify-between items-center text-slate-300">
-                      <span>Previous Season</span>
-                      <span className="font-mono font-bold text-white">{match.awayTeam.code} 2 - 2 {match.homeTeam.code}</span>
-                    </div>
+                  <div className="text-xs font-black text-white uppercase tracking-wider">
+                    Head-to-Head History (ESPN Season Series)
                   </div>
+                  {espnDetails?.h2hMatches && espnDetails.h2hMatches.length > 0 ? (
+                    <div className="space-y-1.5 text-xs">
+                      {espnDetails.h2hMatches.map((h2h, hIdx) => (
+                        <div
+                          key={hIdx}
+                          className="bg-[#0b1018] p-2 rounded-lg flex justify-between items-center text-slate-300 border border-[#182030]"
+                        >
+                          <span className="text-slate-400 text-[11px]">{h2h.date}</span>
+                          <span className="font-mono font-bold text-white">
+                            {h2h.team1.name} {h2h.team1.score} - {h2h.team2.score} {h2h.team2.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-[#0b1018] p-3 rounded-lg text-center text-xs text-slate-400 border border-[#182030]">
+                      No previous meetings on current ESPN season ledger.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
