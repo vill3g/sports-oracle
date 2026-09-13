@@ -14,6 +14,8 @@ interface SlipContextType {
   setActiveLeague: (league: string) => void;
   activeInsightMatch: MatchPrediction | null;
   setActiveInsightMatch: (match: MatchPrediction | null) => void;
+  activeGamePageMatch: MatchPrediction | null;
+  setActiveGamePageMatch: (match: MatchPrediction | null) => void;
   showAccuracyModal: boolean;
   setShowAccuracyModal: (show: boolean) => void;
   savedPortfolios: { id: string; date: string; picks: SelectedPrediction[]; jointProb: number }[];
@@ -35,6 +37,7 @@ export const SlipProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [activeLeague, setActiveLeague] = useState<string>('all');
   const [isSlipOpen, setIsSlipOpen] = useState<boolean>(false);
   const [activeInsightMatch, setActiveInsightMatch] = useState<MatchPrediction | null>(null);
+  const [activeGamePageMatch, setActiveGamePageMatch] = useState<MatchPrediction | null>(null);
   const [showAccuracyModal, setShowAccuracyModal] = useState<boolean>(false);
 
   const [savedPortfolios, setSavedPortfolios] = useState<{ id: string; date: string; picks: SelectedPrediction[]; jointProb: number }[]>(() => {
@@ -107,6 +110,8 @@ export const SlipProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setActiveLeague,
         activeInsightMatch,
         setActiveInsightMatch,
+        activeGamePageMatch,
+        setActiveGamePageMatch,
         showAccuracyModal,
         setShowAccuracyModal,
         savedPortfolios,
