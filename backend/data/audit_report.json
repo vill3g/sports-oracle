@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-09-13T10:02:03.361757",
+  "sports": {
+    "Premier League": {
+      "source": "football-data.co.uk (Premier League)",
+      "initial_rows": 6461,
+      "verified_rows": 6460,
+      "pass_rate_pct": 99.98,
+      "anomalies_handled": [
+        "Dropped 1 rows with missing teams or scores"
+      ],
+      "audit_passed": true
+    },
+    "La Liga": {
+      "source": "football-data.co.uk (La Liga)",
+      "initial_rows": 1140,
+      "verified_rows": 1140,
+      "pass_rate_pct": 100.0,
+      "anomalies_handled": [],
+      "audit_passed": true
+    },
+    "NFL": {
+      "source": "nflverse official play-by-play & schedule",
+      "initial_rows": 3300,
+      "verified_rows": 3030,
+      "pass_rate_pct": 91.82,
+      "anomalies_handled": [],
+      "audit_passed": true
+    },
+    "Tennis": {
+      "source": "Jeff Sackmann ATP Match Charting Project",
+      "initial_rows": 7566,
+      "verified_rows": 7564,
+      "pass_rate_pct": 99.97,
+      "anomalies_handled": [],
+      "audit_passed": true
+    },
+    "MLB": {
+      "source": "Official MLB Stats API (statsapi.mlb.com) & Statcast ML",
+      "initial_rows": 4860,
+      "verified_rows": 4860,
+      "pass_rate_pct": 100.0,
+      "anomalies_handled": [
+        "Zero arithmetic errors",
+        "Pitcher strikeout rates cross-verified against official boxscores"
+      ],
+      "audit_passed": true
+    }
+  },
+  "total_records_checked": 23327,
+  "total_records_passed": 23054,
+  "overall_pass_rate_pct": 98.83,
+  "status": "VERIFIED"
+}
