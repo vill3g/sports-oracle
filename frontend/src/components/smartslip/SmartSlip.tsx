@@ -29,7 +29,7 @@ export const SmartSlip: React.FC = () => {
     <>
       {/* MOBILE FLOATING DOCKED PILL (When not full sheet) */}
       {selectedPicks.length > 0 && !isSlipOpen && (
-        <div className="lg:hidden fixed bottom-16 inset-x-4 z-40">
+        <div className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] inset-x-4 z-40">
           <button
             onClick={() => setIsSlipOpen(true)}
             className="w-full bg-gradient-to-r from-[#00e700] to-[#10b981] hover:brightness-105 text-black font-extrabold px-4 py-3 rounded-2xl shadow-xl shadow-[#00e700]/30 flex items-center justify-between transition transform active:scale-98 cursor-pointer"
