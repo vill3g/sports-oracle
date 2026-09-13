@@ -1,14 +1,19 @@
-﻿import math
+import math
 import random
 from typing import List, Optional
-from .base import BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread, ProjectedTotal, FeatureImpact
+from .base import (
+    BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread,
+    ProjectedTotal, FeatureImpact, AdvancedMetrics, WeatherInfo, MarketIntelligence
+)
 from data.live_schedule_client import live_client
+from data.weather_service import weather_service
+from data.advanced_metrics_provider import metrics_provider
 
 class NFLEngine(BaseLeagueEngine):
     """
     NFL EPA / DVOA Monte Carlo Ensemble Model:
-    Evaluates real pass/rush EPA differentials, defensive DVOA, success rates,
-    and simulates real scheduled games around NFL key scoring numbers (3, 7, 6, 10, 4).
+    Evaluates real pass/rush EPA differentials, PBWR vs PRWR trench mismatches,
+    Red Zone efficiency, weather friction, and simulates real scheduled games around NFL key numbers (3, 7, 6, 10, 4).
     """
     def get_meta(self) -> LeagueMeta:
         real_slate = live_client.get_real_slate("nfl")
@@ -48,13 +53,26 @@ class NFLEngine(BaseLeagueEngine):
         period: Optional[str] = None,
         live_score: Optional[dict] = None
     ) -> MatchPrediction:
+        # 1. Fetch live weather & advanced trench/situational metrics
+        weather_data = weather_service.get_stadium_weather(home_code, "nfl")
+        adv_stats = metrics_provider.get_nfl_advanced(home_code, away_code)
+
+        # 2. Trench adjustment: PBWR vs PRWR swings pass efficiency
+        h_trench_val = float(adv_stats["home_trench_edge"].replace("%", ""))
+        a_trench_val = float(adv_stats["away_trench_edge"].replace("%", ""))
+        h_trench_adj = (h_trench_val * 0.04)
+        a_trench_adj = (a_trench_val * 0.04)
+
+        # Weather modifier (wind & freezing temp drop passing totals)
+        weather_pt_mod = weather_data.get("total_modifier", 0.0)
+
         # Base scoring efficiency
-        h_off_eff = (home_pass_epa * 0.65) + (home_rush_epa * 0.35)
-        a_off_eff = (away_pass_epa * 0.65) + (away_rush_epa * 0.35)
+        h_off_eff = (home_pass_epa * 0.65) + (home_rush_epa * 0.35) + h_trench_adj
+        a_off_eff = (away_pass_epa * 0.65) + (away_rush_epa * 0.35) + a_trench_adj
         
         rest_diff = (home_rest - away_rest) * 0.3
-        h_score_proj = round(22.5 + (h_off_eff * 18.0) - (away_def_epa * 14.0) + 1.8 + rest_diff, 1)
-        a_score_proj = round(22.5 + (a_off_eff * 18.0) - (home_def_epa * 14.0), 1)
+        h_score_proj = round(max(10.0, 22.5 + (h_off_eff * 18.0) - (away_def_epa * 14.0) + 1.8 + rest_diff + (weather_pt_mod * 0.5)), 1)
+        a_score_proj = round(max(10.0, 22.5 + (a_off_eff * 18.0) - (home_def_epa * 14.0) + (weather_pt_mod * 0.5)), 1)
 
         proj_spread_margin = round(abs(h_score_proj - a_score_proj), 1)
         favored = "home" if h_score_proj >= a_score_proj else "away"
@@ -70,6 +88,33 @@ class NFLEngine(BaseLeagueEngine):
         
         cover_prob = round(min(0.68, max(0.52, 0.50 + (spread_edge * 0.045))), 2)
         edge_score = round((spread_edge * 2.2) + (total_edge * 1.4), 1)
+
+        # 3. Market intelligence
+        market_intel = metrics_provider.get_market_intelligence(match_id, favored)
+
+        adv_obj = AdvancedMetrics(
+            weather=WeatherInfo(
+                venueName=weather_data["venue_name"],
+                isDome=weather_data["is_dome"],
+                temperatureF=weather_data["temperature_f"],
+                windSpeedMph=weather_data["wind_speed_mph"],
+                windDirection=weather_data["wind_direction"],
+                condition=weather_data["condition"],
+                impactDesc=weather_data["air_density_impact"],
+                totalModifier=weather_data["total_modifier"]
+            ),
+            market=MarketIntelligence(
+                ticketPctHome=market_intel["ticket_pct_home"],
+                handlePctHome=market_intel["handle_pct_home"],
+                ticketPctAway=market_intel["ticket_pct_away"],
+                handlePctAway=market_intel["handle_pct_away"],
+                reverseLineMovement=market_intel["reverse_line_movement"],
+                rlmNote=market_intel["rlm_note"],
+                sharpSignal=market_intel["sharp_signal"],
+                sharpSide=market_intel["sharp_side"]
+            ),
+            sportStats=adv_stats
+        )
 
         return MatchPrediction(
             id=match_id,
@@ -113,15 +158,18 @@ class NFLEngine(BaseLeagueEngine):
             isTopPick=(edge_score >= 7.5),
             modelVersion="NFL-Ensemble-4.2",
             keyDrivers=[
-                f"Dropback EPA differential: {home_code} {home_pass_epa:+.2f} vs {away_code} {away_pass_epa:+.2f}",
-                f"Model projected margin: {favored.upper()} by {proj_spread_margin} vs Vegas {market_spread} (Edge: +{spread_edge} pts)",
-                f"Total points projected: {projected_total} ({rec_total} {market_total})"
+                f"Trench Battle: {home_code} PBWR {adv_stats['home_pbwr']}% vs {away_code} PRWR {adv_stats['away_prwr']}%",
+                f"Situational: Red Zone TD % ({home_code} {adv_stats['home_rz_td_pct']} vs {away_code} {adv_stats['away_rz_td_pct']})",
+                f"{weather_data['summary']} ({weather_data['air_density_impact']})",
+                f"Sharp Action: {market_intel['sharp_signal']} ({market_intel['handle_pct_home']}% handle on {home_code})"
             ],
             features=[
-                FeatureImpact(name="Passing EPA / Dropback", impact=f"{home_pass_epa:+.2f} vs {away_pass_epa:+.2f}", description=f"{home_team if home_pass_epa > away_pass_epa else away_team} holds passing efficiency advantage", favors="home" if home_pass_epa > away_pass_epa else "away"),
-                FeatureImpact(name="Defensive EPA Allowed / Play", impact=f"{home_def_epa:+.2f} vs {away_def_epa:+.2f}", description="Lower numbers indicate superior resistance on early downs", favors="home" if home_def_epa < away_def_epa else "away"),
-                FeatureImpact(name="Key Number Clustering", impact=f"Line {market_spread} crosses key zone", description="Model evaluates expected value crossing the critical 3-point margin", favors="home")
-            ]
+                FeatureImpact(name="Trench Pass Rush/Block Win Rate", impact=f"{adv_stats['home_trench_edge']} vs {adv_stats['away_trench_edge']}", description="Pass Block Win Rate vs Pass Rush Win Rate trench differential", favors="home" if h_trench_val > a_trench_val else "away"),
+                FeatureImpact(name="Red Zone TD Efficiency", impact=f"{adv_stats['home_rz_td_pct']} vs {adv_stats['away_rz_td_pct']}", description="Four-down touchdown conversion percentage inside 20-yard line", favors="home" if float(adv_stats['home_rz_td_pct'].replace('%','')) > float(adv_stats['away_rz_td_pct'].replace('%','')) else "away"),
+                FeatureImpact(name="Neutral Game Script Pace", impact=adv_stats["neutral_pace_sec"], description=f"Expected pace of play: {adv_stats['pace_verdict']}", favors="neutral"),
+                FeatureImpact(name="Atmospheric Weather Impact", impact=f"{weather_pt_mod:+.1f} pts", description=weather_data["summary"], favors="neutral")
+            ],
+            advancedMetrics=adv_obj
         )
 
     def get_predictions(self) -> List[MatchPrediction]:
