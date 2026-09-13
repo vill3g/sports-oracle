@@ -1,5 +1,9 @@
 from typing import List, Optional
-from .base import BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread, ProjectedTotal, FeatureImpact
+from .base import (
+    BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread,
+    ProjectedTotal, FeatureImpact, AdvancedMetrics, MarketIntelligence
+)
+from data.advanced_metrics_provider import metrics_provider
 
 class NBAEngine(BaseLeagueEngine):
     def get_meta(self) -> LeagueMeta:
@@ -16,6 +20,23 @@ class NBAEngine(BaseLeagueEngine):
         )
 
     def get_predictions(self) -> List[MatchPrediction]:
+        adv_stats = metrics_provider.get_nba_advanced("BOS", "DEN")
+        market_intel = metrics_provider.get_market_intelligence("nba_bos_den", "home")
+
+        adv_obj = AdvancedMetrics(
+            market=MarketIntelligence(
+                ticketPctHome=market_intel["ticket_pct_home"],
+                handlePctHome=market_intel["handle_pct_home"],
+                ticketPctAway=market_intel["ticket_pct_away"],
+                handlePctAway=market_intel["handle_pct_away"],
+                reverseLineMovement=market_intel["reverse_line_movement"],
+                rlmNote=market_intel["rlm_note"],
+                sharpSignal=market_intel["sharp_signal"],
+                sharpSide=market_intel["sharp_side"]
+            ),
+            sportStats=adv_stats
+        )
+
         return [
             MatchPrediction(
                 id="nba_bos_den",
@@ -57,15 +78,17 @@ class NBAEngine(BaseLeagueEngine):
                 isTopPick=True,
                 modelVersion="NBA-FourFactor-3.8",
                 keyDrivers=[
-                    "Projected Over edge: Model estimates 231.5 total points (+5.0 edge)",
-                    "Celtics 3PT volume (42 attempts/game) vs Nuggets drop coverage",
-                    "Net rating at TD Garden: Celtics +11.8 points per 100 possessions"
+                    f"Lineup Net Rating: BOS {adv_stats['home_starter_net_rtg']} vs DEN {adv_stats['away_starter_net_rtg']} per 100 poss",
+                    f"Schedule Strain: DEN {adv_stats['schedule_strain']}",
+                    f"Pace & Over Edge: Model projects {adv_stats['projected_pace']} (231.5 total points vs 226.5 line)",
+                    f"Sharp Money Flow: {market_intel['sharp_signal']} ({market_intel['handle_pct_home']}% handle on Celtics)"
                 ],
                 features=[
-                    FeatureImpact(name="Effective FG% (eFG%) Margin", impact="+4.2% eFG%", description="Celtics floor spacing generates highest corner-3 shot quality in NBA", favors="home"),
-                    FeatureImpact(name="Offensive Rebound Rate", impact="+5.1% ORB", description="Jokic interior presence creates 2nd-chance point advantage for Denver", favors="away"),
-                    FeatureImpact(name="Pace Acceleration", impact="+3.4 Possessions", description="Projected 102.5 possessions exceeds market baseline of 98.2", favors="neutral")
-                ]
+                    FeatureImpact(name="5-Man Starter Net Rating", impact=f"{adv_stats['home_starter_net_rtg']} vs {adv_stats['away_starter_net_rtg']}", description="Differential net points scored per 100 possessions", favors="home"),
+                    FeatureImpact(name="Schedule Fatigue Factor", impact=adv_stats["schedule_strain"], description="Rest advantage and travel distance load on road squad", favors="home"),
+                    FeatureImpact(name="Shot Diet Efficiency", impact=adv_stats["shot_diet_edge"], description="Celtics floor spacing generates highest corner-3 shot quality in NBA", favors="home")
+                ],
+                advancedMetrics=adv_obj
             )
         ]
 
