@@ -150,14 +150,15 @@ export const SofaScoreGamePage: React.FC = () => {
             : 'max-w-4xl h-[95vh] rounded-2xl border border-[#222d42] overflow-hidden'
         }`}
       >
-        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow Wrapped Around It */}
+        {/* iPhone 17 Pro Max Status Bar with Dynamic Island & Pulsing Green Glow */}
         {isPhoneFrame && (
-          <div className="w-full bg-[#0b0f17] py-3 px-7 flex items-center justify-center select-none shrink-0 z-20">
-            <div className="relative flex items-center justify-center">
-              {/* Pulsing neon green halo wrapped snugly around the island perimeter */}
-              <div className="absolute -inset-[3px] rounded-full bg-[#00e700] opacity-80 blur-[5px] animate-pulse pointer-events-none" />
-              {/* Solid black dynamic island pill with glowing neon contour */}
-              <div className="relative w-28 h-7 bg-black rounded-full border-2 border-[#00e700] shadow-[0_0_10px_rgba(0,231,0,0.8),inset_0_0_4px_rgba(0,231,0,0.3)] flex items-center justify-center" />
+          <div className="sticky top-0 z-50 w-full h-[54px] bg-[#0b0f17] shrink-0 select-none">
+            {/* Pulsing Green Glow Wrapped Snugly Around Dynamic Island */}
+            <div className="absolute top-[11px] left-1/2 -translate-x-1/2 w-[126px] h-[37px] pointer-events-none flex items-center justify-center">
+              {/* Symmetrical pulsing neon green halo wrapped tightly around the perimeter */}
+              <div className="absolute -inset-[3px] rounded-full bg-[#00e700] opacity-85 blur-[5px] animate-pulse" />
+              {/* Dynamic Island pill with sharp luminous green edge */}
+              <div className="relative w-full h-full rounded-full border-2 border-[#00e700] shadow-[0_0_12px_rgba(0,231,0,0.9),inset_0_0_4px_rgba(0,231,0,0.3)] bg-black" />
             </div>
           </div>
         )}
