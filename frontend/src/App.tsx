@@ -22,10 +22,19 @@ export const AppContent: React.FC = () => {
   const [viewMode, setViewMode] = useState<'sofascore' | 'grid'>('sofascore');
   const [selectedDate, setSelectedDate] = useState<string>('TODAY');
 
-  const fetchPredictions = async () => {
+  const dateMap: Record<string, string> = {
+    THU: '20260911',
+    FRI: '20260912',
+    TODAY: '20260913',
+    SUN: '20260914',
+    MON: '20260915'
+  };
+
+  const fetchPredictions = async (dateKey: string = selectedDate) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/predictions');
+      const dateParam = dateMap[dateKey] || '20260913';
+      const response = await fetch(`http://127.0.0.1:8000/api/predictions?date=${dateParam}`);
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -40,8 +49,8 @@ export const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchPredictions();
-  }, []);
+    fetchPredictions(selectedDate);
+  }, [selectedDate]);
 
   const filteredPredictions = predictions.filter((p) => {
     if (liveOnly && p.status !== 'live') return false;
@@ -123,7 +132,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={fetchPredictions}
+              onClick={() => fetchPredictions(selectedDate)}
               className="p-1 rounded-lg bg-[#131824] border border-[#20293d] text-slate-400 hover:text-white transition cursor-pointer"
               title="Refresh"
             >
