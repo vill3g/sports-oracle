@@ -66,30 +66,11 @@ export const IPhone17ProMaxContainer: React.FC<IPhone17ProMaxContainerProps> = (
           </>
         )}
 
-        {/* iPhone 17 Pro Max Dynamic Island & iOS 18 Status Bar */}
-        <div className="sticky top-0 z-50 bg-[#0c1017]/95 backdrop-blur-md pt-2 pb-1.5 px-6 flex items-center justify-between text-[11px] text-slate-200 select-none border-b border-[#182030]/60 shrink-0">
-          <span className="font-extrabold tracking-tight">9:41</span>
-
-          {/* Dynamic Island with Active Live Activity */}
-          <div className="w-32 h-6 bg-black rounded-full flex items-center justify-between px-2.5 shadow-md border border-white/5 cursor-pointer group hover:w-36 transition-all">
-            <span className="text-[10px] text-[#00e700] font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00e700] animate-pulse" />
-              <span>LIVE</span>
-            </span>
-            <span className="text-[9px] text-slate-300 font-mono font-extrabold">
-              ORACLE AI
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 font-bold">
-            <span className="text-[10px] font-mono">5G</span>
-            {/* Battery Indicator with 100% inside pill */}
-            <div className="w-6 h-3 border border-slate-300 rounded-sm p-0.5 flex items-center relative">
-              <div className="w-full h-full bg-[#00e700] rounded-2xs flex items-center justify-center">
-                <span className="text-[7px] text-black font-black leading-none">100</span>
-              </div>
-              <div className="w-0.5 h-1.5 bg-slate-300 rounded-r-2xs absolute -right-1" />
-            </div>
+        {/* iPhone 17 Pro Max Dynamic Island with Pulsing Green Glow */}
+        <div className="sticky top-0 z-50 bg-[#0c1017]/95 backdrop-blur-md pt-2.5 pb-2 px-6 flex items-center justify-center select-none border-b border-[#182030]/60 shrink-0">
+          <div className="relative">
+            {/* Dynamic Island pill with vibrant pulsing green glow */}
+            <div className="w-28 h-6 bg-black rounded-full border border-[#00e700]/70 shadow-[0_0_22px_rgba(0,231,0,0.75)] animate-pulse" />
           </div>
         </div>
 
