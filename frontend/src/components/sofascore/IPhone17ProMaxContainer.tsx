@@ -67,13 +67,13 @@ export const IPhone17ProMaxContainer: React.FC<IPhone17ProMaxContainerProps> = (
         )}
 
         {/* iPhone 17 Pro Max Status Bar with Dynamic Island & Pulsing Green Glow */}
-        <div className="sticky top-0 z-50 w-full h-[54px] bg-[#0c1017] shrink-0 select-none">
+        <div className="sticky top-0 z-50 w-full h-[48px] bg-[#0a0d14] shrink-0 select-none">
           {/* Pulsing Green Glow Wrapped Snugly Around Dynamic Island */}
-          <div className="absolute top-[11px] left-1/2 -translate-x-1/2 w-[126px] h-[37px] pointer-events-none flex items-center justify-center">
+          <div className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[126px] h-[36px] pointer-events-none flex items-center justify-center">
             {/* Symmetrical pulsing neon green halo wrapped tightly around the perimeter */}
-            <div className="absolute -inset-[3px] rounded-full bg-[#00e700] opacity-85 blur-[5px] animate-pulse" />
+            <div className="absolute -inset-[2.5px] rounded-full bg-[#00e700] opacity-85 blur-[4px] animate-pulse" />
             {/* Dynamic Island pill with sharp luminous green edge */}
-            <div className="relative w-full h-full rounded-full border-2 border-[#00e700] shadow-[0_0_12px_rgba(0,231,0,0.9),inset_0_0_4px_rgba(0,231,0,0.3)] bg-black" />
+            <div className="relative w-full h-full rounded-full border-2 border-[#00e700] shadow-[0_0_10px_rgba(0,231,0,0.9),inset_0_0_3px_rgba(0,231,0,0.3)] bg-black" />
           </div>
         </div>
 
