@@ -10,6 +10,7 @@ from .base import (
     ProjectedTotal, FeatureImpact, AdvancedMetrics, MarketIntelligence
 )
 from data.advanced_metrics_provider import metrics_provider
+from data.espn_client import espn_client
 
 SOCCER_ML_DIR = r"C:\Users\vill3\.gemini\antigravity\scratch\soccer_ml\data"
 MODEL_PATH = os.path.join(SOCCER_ML_DIR, "elite_xgboost_model.pkl")
@@ -71,7 +72,8 @@ class SoccerEngine(BaseLeagueEngine):
         start_time: str = "Today 3:00 PM",
         status: str = "upcoming",
         live_score: Optional[dict] = None,
-        period: Optional[str] = None
+        period: Optional[str] = None,
+        event_id: Optional[str] = None
     ) -> MatchPrediction:
         # 1. Fetch advanced soccer metrics (npxG, PPDA, press edge)
         adv_stats = metrics_provider.get_soccer_advanced(home_code, away_code)
@@ -207,10 +209,41 @@ class SoccerEngine(BaseLeagueEngine):
                 FeatureImpact(name="High-Pressing Intensity (PPDA)", impact=f"{adv_stats['home_ppda']} vs {adv_stats['away_ppda']} PPDA", description="Passes allowed per defensive action in opponent half", favors="home" if adv_stats['home_ppda'] < adv_stats['away_ppda'] else "away"),
                 FeatureImpact(name="Set-Piece Threat Profile", impact=adv_stats["set_piece_danger"], description="Expected goals generated from dead-ball scenarios", favors="neutral")
             ],
-            advancedMetrics=adv_obj
+            advancedMetrics=adv_obj,
+            eventId=event_id
         )
 
-    def get_predictions(self) -> List[MatchPrediction]:
+    def get_predictions(self, date_str: Optional[str] = None) -> List[MatchPrediction]:
+        real_slate = espn_client.get_schedule(self.league_id, date_str)
+        if real_slate:
+            predictions = []
+            for g in real_slate:
+                pred = self._predict_match_with_model(
+                    home_team=g["home_team"]["name"],
+                    home_code=g["home_team"]["code"],
+                    home_record=g["home_team"]["record"],
+                    away_team=g["away_team"]["name"],
+                    away_code=g["away_team"]["code"],
+                    away_record=g["away_team"]["record"],
+                    odds_h=2.10,
+                    odds_d=3.40,
+                    odds_a=3.20,
+                    home_rest=7,
+                    away_rest=7,
+                    home_fthg_roll3=2.1,
+                    home_hst_roll3=6.0,
+                    away_ftag_roll3=1.4,
+                    away_ast_roll3=4.2,
+                    match_id=g["game_id"],
+                    start_time=g["start_time"],
+                    status=g["status"],
+                    live_score=g["live_score"],
+                    period=g["period"],
+                    event_id=g.get("event_id")
+                )
+                predictions.append(pred)
+            return predictions
+
         if self.league_id == "epl":
             return [
                 self._predict_match_with_model(
