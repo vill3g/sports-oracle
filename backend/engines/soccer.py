@@ -1,11 +1,15 @@
-﻿import os
+import os
 import sys
 import pickle
 import numpy as np
 import pandas as pd
 from typing import List, Optional
 
-from .base import BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread, ProjectedTotal, FeatureImpact
+from .base import (
+    BaseLeagueEngine, LeagueMeta, MatchPrediction, TeamInfo, ProjectedSpread,
+    ProjectedTotal, FeatureImpact, AdvancedMetrics, MarketIntelligence
+)
+from data.advanced_metrics_provider import metrics_provider
 
 SOCCER_ML_DIR = r"C:\Users\vill3\.gemini\antigravity\scratch\soccer_ml\data"
 MODEL_PATH = os.path.join(SOCCER_ML_DIR, "elite_xgboost_model.pkl")
@@ -69,6 +73,9 @@ class SoccerEngine(BaseLeagueEngine):
         live_score: Optional[dict] = None,
         period: Optional[str] = None
     ) -> MatchPrediction:
+        # 1. Fetch advanced soccer metrics (npxG, PPDA, press edge)
+        adv_stats = metrics_provider.get_soccer_advanced(home_code, away_code)
+
         # Default probabilities derived from odds if model fails
         implied_H, implied_D, implied_A = 1/odds_h, 1/odds_d, 1/odds_a
         margin = (implied_H + implied_D + implied_A) - 1.0
@@ -105,6 +112,13 @@ class SoccerEngine(BaseLeagueEngine):
             except Exception as e:
                 print(f"[SoccerEngine] Inference fallback: {e}")
 
+        # Non-penalty xG recalibration
+        npxg_diff = adv_stats["home_npxg"] - adv_stats["away_npxg"]
+        p_home = min(0.85, max(0.10, p_home + (npxg_diff * 0.04)))
+        p_away = min(0.85, max(0.10, p_away - (npxg_diff * 0.04)))
+        norm_sum = p_home + p_draw + p_away
+        p_home, p_draw, p_away = p_home / norm_sum, p_draw / norm_sum, p_away / norm_sum
+
         # Derived metrics
         proj_home_goals = round(max(0.4, (p_home * 2.8) + (p_draw * 0.9)), 1)
         proj_away_goals = round(max(0.3, (p_away * 2.4) + (p_draw * 0.8)), 1)
@@ -122,6 +136,23 @@ class SoccerEngine(BaseLeagueEngine):
 
         edge_score = round(abs(p_home - true_h) * 100 + abs(projected_total_goals - 2.5) * 4.0, 1)
         confidence = "HIGH" if edge_score >= 7.5 else ("MEDIUM" if edge_score >= 4.0 else "VALUE_LEAN")
+
+        # Market intelligence
+        market_intel = metrics_provider.get_market_intelligence(match_id, favored)
+
+        adv_obj = AdvancedMetrics(
+            market=MarketIntelligence(
+                ticketPctHome=market_intel["ticket_pct_home"],
+                handlePctHome=market_intel["handle_pct_home"],
+                ticketPctAway=market_intel["ticket_pct_away"],
+                handlePctAway=market_intel["handle_pct_away"],
+                reverseLineMovement=market_intel["reverse_line_movement"],
+                rlmNote=market_intel["rlm_note"],
+                sharpSignal=market_intel["sharp_signal"],
+                sharpSide=market_intel["sharp_side"]
+            ),
+            sportStats=adv_stats
+        )
 
         return MatchPrediction(
             id=match_id,
@@ -166,15 +197,17 @@ class SoccerEngine(BaseLeagueEngine):
             isTopPick=(edge_score >= 8.0),
             modelVersion="Soccer-XGB-3.2",
             keyDrivers=[
-                f"{home_team} roll-3 shots on target: {home_hst_roll3} vs {away_team} {away_ast_roll3}",
-                f"Rest differential: {home_team} {home_rest}d vs {away_team} {away_rest}d",
-                f"Trained XGBoost model edge: +{edge_score}% divergence from true implied odds"
+                f"Non-Penalty xG Profile: {home_code} {adv_stats['home_npxg']} vs {away_code} {adv_stats['away_npxg']} (npxGA {adv_stats['home_npxga']})",
+                f"Defensive Pressing: {adv_stats['pressing_advantage']} ({adv_stats['home_ppda']} vs {adv_stats['away_ppda']} PPDA)",
+                f"Rest disparity: {home_team} {home_rest}d vs {away_team} {away_rest}d",
+                f"Sharp Flow: {market_intel['sharp_signal']} ({market_intel['handle_pct_home']}% handle on {home_code})"
             ],
             features=[
-                FeatureImpact(name="XGBoost Non-Penalty Form", impact=f"+{round((p_home - 0.33)*100, 1)}% Home", description=f"Rolling stats: {home_team} generating {home_fthg_roll3} goals/game", favors="home" if p_home > p_away else "away"),
-                FeatureImpact(name="Rest Disparity", impact=f"{home_rest - away_rest} Days Edge", description=f"{home_team} has {home_rest} days rest vs {away_team} {away_rest} days", favors="home" if home_rest >= away_rest else "away"),
-                FeatureImpact(name="Shot Quality (HST/AST)", impact=f"{home_hst_roll3} vs {away_ast_roll3}", description="Shots on target disparity drives higher conversion ceiling", favors="home")
-            ]
+                FeatureImpact(name="Non-Penalty xG Disparity", impact=f"{adv_stats['home_npxg']} vs {adv_stats['away_npxg']} npxG", description=f"Rolling expected goals excluding high-variance penalties", favors="home" if adv_stats['home_npxg'] > adv_stats['away_npxg'] else "away"),
+                FeatureImpact(name="High-Pressing Intensity (PPDA)", impact=f"{adv_stats['home_ppda']} vs {adv_stats['away_ppda']} PPDA", description="Passes allowed per defensive action in opponent half", favors="home" if adv_stats['home_ppda'] < adv_stats['away_ppda'] else "away"),
+                FeatureImpact(name="Set-Piece Threat Profile", impact=adv_stats["set_piece_danger"], description="Expected goals generated from dead-ball scenarios", favors="neutral")
+            ],
+            advancedMetrics=adv_obj
         )
 
     def get_predictions(self) -> List[MatchPrediction]:
