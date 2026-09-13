@@ -100,6 +100,65 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
       {/* Main Grid: Teams & Prediction Odds Matrix */}
       <div className="p-3 sm:p-4">
+        {/* Edge Factors Quick Badge Strip */}
+        {match.advancedMetrics && (
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            {match.advancedMetrics.weather && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-950/40 border border-blue-500/30 text-[10px] font-medium text-blue-300">
+                <span>{match.advancedMetrics.weather.isDome ? '🏟️' : '💨'}</span>
+                <span>{match.advancedMetrics.weather.isDome ? 'Dome (Controlled)' : `${Math.round(match.advancedMetrics.weather.temperatureF)}°F • ${match.advancedMetrics.weather.windDirection}`}</span>
+              </span>
+            )}
+            {match.advancedMetrics.sportStats && (
+              <>
+                {match.leagueId === 'nfl' && match.advancedMetrics.sportStats.home_trench_edge && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/40 border border-amber-500/30 text-[10px] font-medium text-amber-300">
+                    <span>🛡️</span>
+                    <span>Trench Edge: {match.advancedMetrics.sportStats.home_trench_edge}</span>
+                  </span>
+                )}
+                {match.leagueId === 'mlb' && match.advancedMetrics.sportStats.home_pitcher_stuff_plus && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-950/40 border border-purple-500/30 text-[10px] font-medium text-purple-300">
+                    <span>⚡</span>
+                    <span>Starter Stuff+ {match.advancedMetrics.sportStats.home_pitcher_stuff_plus} (CSW {match.advancedMetrics.sportStats.home_pitcher_csw_pct}%)</span>
+                  </span>
+                )}
+                {(match.leagueId === 'epl' || match.leagueId === 'laliga') && match.advancedMetrics.sportStats.home_npxg && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-[10px] font-medium text-emerald-300">
+                    <span>🎯</span>
+                    <span>npxG: {match.advancedMetrics.sportStats.home_npxg} vs {match.advancedMetrics.sportStats.away_npxg}</span>
+                  </span>
+                )}
+                {match.leagueId === 'nba' && match.advancedMetrics.sportStats.home_starter_net_rtg && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-950/40 border border-cyan-500/30 text-[10px] font-medium text-cyan-300">
+                    <span>📈</span>
+                    <span>Net Rtg: {match.advancedMetrics.sportStats.home_starter_net_rtg}</span>
+                  </span>
+                )}
+                {match.leagueId === 'tennis' && match.advancedMetrics.sportStats.court_pace_index && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-lime-950/40 border border-lime-500/30 text-[10px] font-medium text-lime-300">
+                    <span>🎾</span>
+                    <span>CPI {match.advancedMetrics.sportStats.court_pace_index} ({match.advancedMetrics.sportStats.court_speed_desc})</span>
+                  </span>
+                )}
+              </>
+            )}
+            {match.advancedMetrics.market && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
+                match.advancedMetrics.market.reverseLineMovement
+                  ? 'bg-rose-950/40 border-rose-500/40 text-rose-300 font-bold'
+                  : 'bg-slate-800/80 border-slate-700 text-slate-300'
+              }`}>
+                <span>📊</span>
+                <span>Sharp Flow: {match.advancedMetrics.market.handlePctHome}% Handle</span>
+                {match.advancedMetrics.market.reverseLineMovement && (
+                  <span className="text-red-400 font-extrabold ml-0.5">RLM</span>
+                )}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Column Headers */}
         <div className="grid grid-cols-12 gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
           <div className="col-span-5 sm:col-span-4">Matchup</div>
