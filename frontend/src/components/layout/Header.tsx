@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Sparkles, ShieldCheck, BarChart3 } from 'lucide-react';
 import { useSlip } from '../../context/SlipContext';
 
@@ -16,6 +16,7 @@ export const Header: React.FC = () => {
           <div className="flex items-baseline gap-1.5">
             <span className="font-black tracking-wider text-white text-base">ORACLE</span>
             <span className="font-extrabold text-[#00e700] text-sm tracking-widest uppercase">SPORTS</span>
+            <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/50">ET</span>
           </div>
         </div>
 
